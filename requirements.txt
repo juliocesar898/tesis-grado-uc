@@ -1,0 +1,14 @@
+# Math & Scientific Computing (optimizados para estabilidad de matrices)
+numpy>=1.20.0
+scipy>=1.7.0
+matplotlib>=3.7.0
+pandas>=2.0.0
+scikit-learn>=1.2.0
+jupyter>=1.0.0
+
+# Deep Learning Framework
+tensorflow>=2.14.0
+
+# Software Defined Radio (SDR)
+pyrtlsdr>=0.2.9
+# SoapySDR>=0.8.0   # (Opcional recomendado para HackRF One)
