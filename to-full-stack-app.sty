@@ -1,0 +1,110 @@
+Sí. La forma más limpia sería separar tu sistema en tres capas: motor de inferencia, API REST y cliente web React. Con tu código actual eso encaja bien, porque hoy el flujo completo ya existe en src/main.py: captura, preprocesamiento, carga del modelo, predicción y visualización. Lo que falta es desacoplarlo para que deje de depender del script local y pueda ser consumido por HTTP.
+
+ARQUITECTURA
+
+Tu núcleo de negocio ya está bastante claro:
+- Captura de señal en src/capture.py
+- Preprocesamiento en src/processing.py
+- Carga y uso del modelo en src/model.py
+- Visualización local en src/plot_signal.py
+
+A grandes rasgos, los componentes que necesitarías son:
+
+1. Servicio de inferencia
+Sería una capa interna de Python que haga esto: recibir muestras IQ, normalizarlas, cargar el modelo una vez y devolver clase predicha, probabilidades y metadatos. En tu proyecto hoy esa lógica está repartida en src/main.py y src/model.py. Para una API conviene moverla a algo como un PredictionService.
+
+2. API REST
+Lo normal sería usar FastAPI o Flask. La API expondría endpoints como:
+- POST /predict para enviar IQ y obtener la predicción
+- GET /health para saber si el servicio está vivo
+- GET /model/info para ver versión del modelo, shape esperado, clases soportadas
+- opcional POST /capture-and-predict si quieres que el backend tome la señal directamente del SDR
+
+3. Esquemas de entrada y salida
+Necesitas definir contratos JSON claros. Por ejemplo:
+- entrada: lista de muestras IQ, frecuencia, sample rate, timestamp, origen
+- salida: clase predicha, confianza, vector de probabilidades, señales procesadas, errores de validación
+
+4. Gestor del modelo
+TensorFlow no debería cargarse en cada request. Necesitas un componente que cargue el .h5 al arrancar y lo mantenga en memoria. Eso sale directamente de src/model.py, pero adaptado a un contexto servidor.
+
+5. Validación de datos
+Es importante porque tu CNN espera algo con forma (128, 2) según src/model.py. Entonces la API debe validar:
+- número de muestras
+- formato complejo o pares I/Q
+- rangos válidos
+- sample rate y metadatos mínimos
+
+6. Frontend React
+La app React sería para:
+- cargar archivos o pegar muestras IQ
+- lanzar predicciones
+- mostrar clase y confianza
+- mostrar gráficos de señal, constelación y quizá espectrograma
+- listar historial de predicciones
+- mostrar estado del backend y del modelo
+
+7. Capa de visualización web
+Lo que hoy haces con matplotlib en src/plot_signal.py en web conviene recrearlo con librerías como recharts, plotly.js, echarts o apexcharts. Ahí renderizarías:
+- dominio temporal I/Q
+- constelación I/Q
+- barra de probabilidades por clase
+- espectrograma si te interesa análisis adicional
+
+8. Persistencia opcional
+Si quieres trazabilidad, agrega una base de datos ligera:
+- SQLite para algo simple
+- PostgreSQL si quieres crecer
+Guardarías request, predicción, confianza, timestamps, versión del modelo y quizás referencia al archivo de entrada.
+
+9. Cola o procesamiento asíncrono opcional
+Solo hace falta si luego vas a procesar archivos grandes, streaming o muchas peticiones. Si no, una API síncrona basta al principio.
+
+10. Despliegue
+Necesitarías al menos:
+- backend Python
+- frontend React
+- configuración de CORS
+- variables de entorno para ruta del modelo, tamaño de ventana, clases y modo SDR/mock
+
+FLUJO RECOMENDADO
+
+La versión más razonable para empezar sería esta:
+
+1. React envía muestras IQ a la API.
+2. La API valida el payload.
+3. El servicio de inferencia ejecuta normalize_iq de src/processing.py.
+4. El backend usa el modelo cargado desde src/model.py.
+5. Devuelve clase, confianza y probabilidades.
+6. React pinta resultados y gráficos.
+
+QUÉ SEPARARÍA PRIMERO EN TU CÓDIGO
+
+Tu src/main.py hoy mezcla orquestación, logging, captura, plotting y predicción. Para convertirlo en producto consumible por API, lo primero sería separar:
+- lógica de negocio: predecir una muestra IQ
+- lógica de transporte: HTTP
+- lógica de interfaz: gráficos y dashboard
+
+Ese desacople es la clave. Si no lo haces, la API terminará heredando dependencias de script local como matplotlib o captura directa de hardware.
+
+STACK MÍNIMO SUGERIDO
+
+Si quieres algo práctico y mantenible:
+- Backend: FastAPI
+- Servidor ASGI: uvicorn
+- Validación: Pydantic
+- Frontend: React con Vite
+- Gráficos: Plotly o ECharts
+- Persistencia opcional: SQLite al inicio
+
+EN UNA PRIMERA VERSIÓN MVP
+
+Yo haría solo esto:
+1. POST /predict con IQ en JSON
+2. React con formulario de envío
+3. tarjeta con clase predicha y confianza
+4. gráfico temporal I/Q
+5. gráfico de probabilidades por clase
+6. endpoint GET /health
+
+Con eso ya tendrías una arquitectura útil sin sobrecomplicarla.

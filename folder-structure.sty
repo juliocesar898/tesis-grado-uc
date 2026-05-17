@@ -1,0 +1,71 @@
+tesis-grado-uc/
+├── README.md
+├── requirements.txt
+├── data/
+│   ├── raw/
+│   └── processed/
+├── models/
+│   └── amc_model.h5
+├── src/
+│   ├── __init__.py
+│   ├── capture.py
+│   ├── main.py
+│   ├── model.py
+│   ├── plot_signal.py
+│   └── processing.py
+├── backend/
+│   ├── app/
+│   │   ├── __init__.py
+│   │   ├── main.py
+│   │   ├── api/
+│   │   │   ├── __init__.py
+│   │   │   └── routes.py
+│   │   ├── schemas/
+│   │   │   ├── __init__.py
+│   │   │   ├── request.py
+│   │   │   └── response.py
+│   │   ├── services/
+│   │   │   ├── __init__.py
+│   │   │   ├── prediction_service.py
+│   │   │   └── model_service.py
+│   │   ├── core/
+│   │   │   ├── __init__.py
+│   │   │   ├── config.py
+│   │   │   └── logging.py
+│   │   └── adapters/
+│   │       ├── __init__.py
+│   │       ├── capture_adapter.py
+│   │       ├── processing_adapter.py
+│   │       └── model_adapter.py
+│   ├── tests/
+│   │   ├── test_health.py
+│   │   └── test_predict.py
+│   ├── requirements.txt
+│   └── .env
+├── frontend/
+│   ├── package.json
+│   ├── vite.config.js
+│   ├── public/
+│   └── src/
+│       ├── main.jsx
+│       ├── App.jsx
+│       ├── api/
+│       │   └── client.js
+│       ├── components/
+│       │   ├── PredictionForm.jsx
+│       │   ├── PredictionCard.jsx
+│       │   ├── SignalChart.jsx
+│       │   ├── ConstellationChart.jsx
+│       │   └── ProbabilityChart.jsx
+│       ├── pages/
+│       │   └── Dashboard.jsx
+│       ├── hooks/
+│       │   └── usePrediction.js
+│       ├── styles/
+│       │   └── app.css
+│       └── utils/
+│           └── formatters.js
+└── docs/
+    ├── architecture.md
+    ├── api-contract.md
+    └── deployment.md
